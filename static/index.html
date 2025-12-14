@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Глоссарий Backend-Driven UI - Семантический граф</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .controls button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .controls button:hover {
+            background: #5568d3;
+        }
+        
+        .controls input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .main-content {
+            display: flex;
+            height: calc(100vh - 250px);
+            min-height: 600px;
+        }
+        
+        #graph-container {
+            flex: 1;
+            border-right: 1px solid #e0e0e0;
+            position: relative;
+        }
+        
+        .sidebar {
+            width: 350px;
+            background: #f8f9fa;
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 100%;
+        }
+        
+        .term-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .term-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        
+        .term-card.selected {
+            border: 2px solid #667eea;
+            background: #f0f4ff;
+        }
+        
+        .term-keyword {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+        
+        .term-description {
+            color: #666;
+            font-size: 0.9em;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+        
+        .term-source {
+            font-size: 0.8em;
+            color: #999;
+            font-style: italic;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            color: #667eea;
+        }
+        
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px;
+        }
+        
+        .stats {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .stats h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .stats p {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .view-btn {
+            padding: 10px 20px;
+            background: #e0e0e0;
+            color: #333;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+            margin-right: 10px;
+        }
+        
+        .view-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .view-btn:hover {
+            background: #5568d3;
+            color: white;
+        }
+        
+        .view-container {
+            display: flex;
+            height: calc(100vh - 250px);
+            min-height: 600px;
+        }
+        
+        .list-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+        
+        .term-card-full {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .term-card-full:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .term-card-full .term-keyword {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+        
+        .term-card-full .term-description {
+            color: #333;
+            font-size: 1em;
+            line-height: 1.6;
+            white-space: pre-line;
+        }
+        
+        .legend {
+            position: absolute;
+            top: 120px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            max-width: 250px;
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        
+        .legend h3 {
+            margin: 0 0 10px 0;
+            color: #667eea;
+            font-size: 1em;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.85em;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 3px;
+            margin-right: 8px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Глоссарий Backend-Driven UI</h1>
+            <p>Семантический граф терминов и их взаимосвязей</p>
+        </div>
+        
+        <div class="controls">
+            <button onclick="switchView('graph')" id="btn-graph" class="view-btn active">📊 Граф</button>
+            <button onclick="switchView('list')" id="btn-list" class="view-btn">📋 Список</button>
+            <button onclick="loadGraph()" id="btn-refresh" style="display: none;">🔄 Обновить</button>
+            <button onclick="resetView()" id="btn-reset" style="display: none;">🎯 Сбросить вид</button>
+            <input type="text" id="searchInput" placeholder="Поиск термина..." onkeyup="searchTerm(event)" style="display: none;">
+            <button onclick="clearSearch()" id="btn-clear" style="display: none;">✖️ Очистить</button>
+            <button onclick="toggleLegend()" id="btn-legend" style="display: none;">📋 Легенда</button>
+        </div>
+        
+        <div id="legend" class="legend" style="display: none;">
+            <h3>Типы связей:</h3>
+            <div id="legend-content"></div>
+        </div>
+        
+        <div class="main-content">
+            <!-- Вид графа -->
+            <div id="graph-view" class="view-container">
+                <div id="graph-container">
+                    <div class="loading" id="loading">Загрузка графа...</div>
+                </div>
+                
+                <div class="sidebar">
+                    <div class="stats">
+                        <h3>📊 Статистика</h3>
+                        <p id="statsText">Загрузка...</p>
+                    </div>
+                    <div id="terms-list"></div>
+                </div>
+            </div>
+            
+            <!-- Вид списка -->
+            <div id="list-view" class="view-container" style="display: none;">
+                <div class="list-container">
+                    <div id="terms-cards"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let network = null;
+        let nodes = null;
+        let edges = null;
+        let allNodes = [];
+        let allEdges = [];
+        let selectedNodeId = null;
+        
+        const API_BASE = window.location.origin;
+        
+        // Функция для получения цвета связи по типу (глобальная)
+        function getRelationColor(relationType) {
+            const colorMap = {
+                'являетсяЧастью': '#e74c3c',
+                'включаетВ': '#3498db',
+                'являетсяВидом': '#9b59b6',
+                'являетсяПодтипом': '#e67e22',
+                'связанаС': '#1abc9c',
+                'используетсяДля': '#f39c12',
+                'оцениваетсяПо': '#16a085',
+                'используетсяВ': '#34495e',
+                'описывает': '#27ae60',
+                'содержит': '#8e44ad',
+                'представляетсяВФормате': '#c0392b',
+                'определяет': '#2980b9',
+                'валидируетсяПо': '#d35400',
+                'валидируетсяЧерез': '#d35400',
+                'обеспечивается': '#7f8c8d',
+                'требует': '#95a5a6',
+                'требуетСогласования': '#bdc3c7',
+                'влияетНа': '#ecf0f1',
+                'измеряетсяМетрикой': '#2ecc71',
+                'можетУвеличивать': '#e91e63',
+                'обычноСнижает': '#00bcd4',
+                'снижает': '#4caf50',
+                'ускоряет': '#ff9800',
+                'увеличивает': '#f44336',
+                'поддерживает': '#2196f3',
+                'повышает': '#9c27b0',
+                'related': '#999'
+            };
+            return colorMap[relationType] || '#999';
+        }
+        
+        // Загрузка данных графа
+        async function loadGraph() {
+            const loadingEl = document.getElementById('loading');
+            loadingEl.style.display = 'block';
+            
+            try {
+                const response = await fetch(`${API_BASE}/terms/graph/data`);
+                if (!response.ok) throw new Error('Ошибка загрузки данных');
+                
+                const data = await response.json();
+                allNodes = data.nodes;
+                allEdges = data.edges;
+                
+                // Обновление статистики
+                document.getElementById('statsText').innerHTML = `
+                    <strong>Терминов:</strong> ${allNodes.length}<br>
+                    <strong>Связей:</strong> ${allEdges.length}
+                `;
+                
+                // Создание визуализации
+                createVisualization(allNodes, allEdges);
+                
+                // Загрузка списка терминов в сайдбаре
+                loadTermsListSidebar();
+                
+                // Обновление легенды
+                updateLegend();
+                
+            } catch (error) {
+                console.error('Ошибка:', error);
+                document.getElementById('graph-container').innerHTML = 
+                    `<div class="error">Ошибка загрузки данных: ${error.message}</div>`;
+            } finally {
+                loadingEl.style.display = 'none';
+            }
+        }
+        
+        // Создание визуализации графа
+        function createVisualization(nodesData, edgesData) {
+            const container = document.getElementById('graph-container');
+            
+            // Подготовка данных для vis-network
+            nodes = new vis.DataSet(nodesData.map(node => {
+                // Форматируем описание для tooltip
+                const description = node.description || 'Описание отсутствует';
+                // Убираем переносы строк для HTML tooltip
+                const cleanDesc = description.replace(/\n/g, ' ').trim();
+                const shortDesc = cleanDesc.length > 300 ? cleanDesc.substring(0, 300) + '...' : cleanDesc;
+                
+                return {
+                    id: node.id,
+                    label: node.label,
+                    title: `${node.label}\n\n${shortDesc}`,
+                    color: {
+                        background: '#667eea',
+                        border: '#5568d3',
+                        highlight: {
+                            background: '#764ba2',
+                            border: '#667eea'
+                        }
+                    },
+                    font: {
+                        size: 16,
+                        color: '#333'
+                    },
+                    shape: 'box',
+                    margin: 10
+                };
+            }));
+            
+            // Функция для сокращения длинных типов связей
+            function shortenRelationType(relationType) {
+                if (relationType.length > 15) {
+                    return relationType.substring(0, 12) + '...';
+                }
+                return relationType;
+            }
+            
+            edges = new vis.DataSet(edgesData.map(edge => ({
+                from: edge.from,
+                to: edge.to,
+                label: shortenRelationType(edge.type || 'related'),
+                arrows: 'to',
+                color: {
+                    color: getRelationColor(edge.type || 'related'),
+                    highlight: '#667eea'
+                },
+                width: 2,
+                font: {
+                    size: 10,
+                    align: 'middle',
+                    color: '#333'
+                },
+                smooth: {
+                    type: 'continuous',
+                    roundness: 0.5
+                }
+            })));
+            
+            const data = { nodes, edges };
+            
+            const options = {
+                nodes: {
+                    shape: 'box',
+                    font: {
+                        size: 14,
+                        face: 'Segoe UI'
+                    },
+                    borderWidth: 2,
+                    shadow: true
+                },
+                edges: {
+                    arrows: {
+                        to: {
+                            enabled: true,
+                            scaleFactor: 0.8
+                        }
+                    },
+                    smooth: {
+                        type: 'continuous',
+                        roundness: 0.3
+                    },
+                    shadow: true,
+                    font: {
+                        size: 10,
+                        align: 'middle'
+                    },
+                    labelHighlightBold: false
+                },
+                physics: {
+                    enabled: true,
+                    stabilization: {
+                        enabled: true,
+                        iterations: 300
+                    },
+                    barnesHut: {
+                        gravitationalConstant: -3000,
+                        centralGravity: 0.05,
+                        springLength: 150,
+                        springConstant: 0.05,
+                        damping: 0.1
+                    }
+                },
+                interaction: {
+                    hover: true,
+                    tooltipDelay: 200,
+                    zoomView: true,
+                    dragView: true
+                },
+                layout: {
+                    improvedLayout: true
+                }
+            };
+            
+            network = new vis.Network(container, data, options);
+            
+            // Обработка событий
+            network.on('click', function(params) {
+                if (params.nodes.length > 0) {
+                    const nodeId = params.nodes[0];
+                    highlightNode(nodeId);
+                    showTermDetails(nodeId);
+                } else {
+                    clearSelection();
+                }
+            });
+            
+            network.on('hoverNode', function(params) {
+                container.style.cursor = 'pointer';
+            });
+            
+            network.on('blurNode', function(params) {
+                container.style.cursor = 'default';
+            });
+        }
+        
+        // Подсветка узла
+        function highlightNode(nodeId) {
+            selectedNodeId = nodeId;
+            const node = allNodes.find(n => n.id === nodeId);
+            if (!node) return;
+            
+            // Обновление списка терминов
+            const cards = document.querySelectorAll('.term-card');
+            cards.forEach(card => {
+                if (parseInt(card.dataset.id) === nodeId) {
+                    card.classList.add('selected');
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    card.classList.remove('selected');
+                }
+            });
+            
+            // Подсветка в графе
+            const connectedNodes = network.getConnectedNodes(nodeId);
+            const highlightNodes = [nodeId, ...connectedNodes];
+            
+            nodes.update(nodes.get().map(n => ({
+                ...n,
+                color: highlightNodes.includes(n.id) ? {
+                    background: n.id === nodeId ? '#764ba2' : '#a8b5ff',
+                    border: n.id === nodeId ? '#667eea' : '#667eea',
+                    highlight: {
+                        background: '#764ba2',
+                        border: '#667eea'
+                    }
+                } : {
+                    background: '#e0e0e0',
+                    border: '#ccc',
+                    highlight: {
+                        background: '#667eea',
+                        border: '#5568d3'
+                    }
+                }
+            })));
+        }
+        
+        // Показать детали термина
+        function showTermDetails(nodeId) {
+            const node = allNodes.find(n => n.id === nodeId);
+            if (!node) return;
+            
+            // Можно добавить модальное окно с деталями
+            console.log('Выбран термин:', node);
+        }
+        
+        // Очистить выделение
+        function clearSelection() {
+            selectedNodeId = null;
+            document.querySelectorAll('.term-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            nodes.update(nodes.get().map(n => ({
+                ...n,
+                color: {
+                    background: '#667eea',
+                    border: '#5568d3',
+                    highlight: {
+                        background: '#764ba2',
+                        border: '#667eea'
+                    }
+                }
+            })));
+        }
+        
+        // Загрузка списка терминов в сайдбаре (для графа)
+        async function loadTermsListSidebar() {
+            try {
+                const response = await fetch(`${API_BASE}/terms`);
+                if (!response.ok) throw new Error('Ошибка загрузки терминов');
+                
+                const terms = await response.json();
+                const listContainer = document.getElementById('terms-list');
+                
+                listContainer.innerHTML = terms.map(term => `
+                    <div class="term-card" data-id="${term.id}" onclick="selectTerm(${term.id})">
+                        <div class="term-keyword">${term.keyword}</div>
+                        <div class="term-description">${term.description.substring(0, 100)}${term.description.length > 100 ? '...' : ''}</div>
+                        ${term.source ? `<div class="term-source">Источник: ${term.source}</div>` : ''}
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Ошибка загрузки списка терминов:', error);
+            }
+        }
+        
+        // Выбор термина из списка
+        function selectTerm(termId) {
+            if (network) {
+                network.focus(termId, {
+                    scale: 1.5,
+                    animation: {
+                        duration: 1000,
+                        easingFunction: 'easeInOutQuad'
+                    }
+                });
+                highlightNode(termId);
+            }
+        }
+        
+        // Поиск термина
+        function searchTerm(event) {
+            if (event.key === 'Enter') {
+                const searchValue = document.getElementById('searchInput').value.toLowerCase().trim();
+                if (!searchValue) {
+                    clearSearch();
+                    return;
+                }
+                
+                const foundNode = allNodes.find(node => 
+                    node.label.toLowerCase().includes(searchValue) ||
+                    node.description.toLowerCase().includes(searchValue)
+                );
+                
+                if (foundNode && network) {
+                    selectTerm(foundNode.id);
+                } else {
+                    alert('Термин не найден');
+                }
+            }
+        }
+        
+        // Очистить поиск
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            clearSelection();
+            if (network) {
+                network.fit({
+                    animation: {
+                        duration: 1000,
+                        easingFunction: 'easeInOutQuad'
+                    }
+                });
+            }
+        }
+        
+        // Сбросить вид
+        function resetView() {
+            clearSearch();
+            if (network) {
+                network.fit({
+                    animation: {
+                        duration: 1000,
+                        easingFunction: 'easeInOutQuad'
+                    }
+                });
+            }
+        }
+        
+        // Показать/скрыть легенду
+        function toggleLegend() {
+            const legend = document.getElementById('legend');
+            legend.style.display = legend.style.display === 'none' ? 'block' : 'none';
+            if (legend.style.display === 'block') {
+                updateLegend();
+            }
+        }
+        
+        // Обновить легенду
+        function updateLegend() {
+            const legendContent = document.getElementById('legend-content');
+            const relationTypes = new Set();
+            
+            allEdges.forEach(edge => {
+                if (edge.type) {
+                    relationTypes.add(edge.type);
+                }
+            });
+            
+            const sortedTypes = Array.from(relationTypes).sort();
+            legendContent.innerHTML = sortedTypes.map(type => {
+                const color = getRelationColor(type);
+                return `
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color: ${color};"></span>
+                        <span>${type}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Переключение между видами
+        function switchView(viewType) {
+            const graphView = document.getElementById('graph-view');
+            const listView = document.getElementById('list-view');
+            const btnGraph = document.getElementById('btn-graph');
+            const btnList = document.getElementById('btn-list');
+            const graphControls = ['btn-refresh', 'btn-reset', 'searchInput', 'btn-clear', 'btn-legend'];
+            
+            if (!graphView || !listView || !btnGraph || !btnList) {
+                console.error('Не найдены необходимые элементы DOM');
+                return;
+            }
+            
+            if (viewType === 'graph') {
+                graphView.style.display = 'flex';
+                listView.style.display = 'none';
+                btnGraph.classList.add('active');
+                btnList.classList.remove('active');
+                graphControls.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'inline-block';
+                });
+                if (!network) {
+                    loadGraph();
+                }
+            } else {
+                graphView.style.display = 'none';
+                listView.style.display = 'block';
+                btnGraph.classList.remove('active');
+                btnList.classList.add('active');
+                graphControls.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
+                loadTermsList();
+            }
+        }
+        
+        // Загрузка списка терминов в виде карточек (для вида списка)
+        async function loadTermsList() {
+            try {
+                const response = await fetch(`${API_BASE}/terms?limit=1000`);
+                if (!response.ok) throw new Error('Ошибка загрузки терминов');
+                
+                const terms = await response.json();
+                const container = document.getElementById('terms-cards');
+                
+                // Сортируем термины по алфавиту
+                terms.sort((a, b) => a.keyword.localeCompare(b.keyword));
+                
+                container.innerHTML = terms.map(term => `
+                    <div class="term-card-full">
+                        <div class="term-keyword">${term.keyword}</div>
+                        <div class="term-description">${term.description || 'Описание отсутствует'}</div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Ошибка загрузки списка терминов:', error);
+                document.getElementById('terms-cards').innerHTML = 
+                    `<div class="error">Ошибка загрузки данных: ${error.message}</div>`;
+            }
+        }
+        
+        // Инициализация при загрузке страницы
+        window.addEventListener('load', () => {
+            // По умолчанию открываем граф
+            switchView('graph');
+        });
+    </script>
+</body>
+</html>
+
