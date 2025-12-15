@@ -203,11 +203,29 @@
             min-height: 600px;
         }
         
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+        
+        .list-header h2 {
+            color: #667eea;
+            margin: 0;
+        }
+        
         .list-container {
             flex: 1;
             padding: 20px;
             overflow-y: auto;
+            overflow-x: hidden;
             background: #f8f9fa;
+            min-height: 0;
         }
         
         .term-card-full {
@@ -273,6 +291,251 @@
             margin-right: 8px;
             display: inline-block;
         }
+        
+        .zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 10000;
+            pointer-events: none;
+        }
+        
+        .zoom-controls .zoom-btn {
+            pointer-events: auto;
+        }
+        
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        
+        .zoom-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .zoom-btn:active {
+            transform: scale(0.95);
+        }
+        
+        #graph-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .management-section {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .management-section h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+        
+        .manage-btn {
+            width: 100%;
+            padding: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .manage-btn:hover {
+            background: #5568d3;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            overflow: auto;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 15px;
+        }
+        
+        .modal-header h2 {
+            color: #667eea;
+            margin: 0;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 28px;
+            font-weight: bold;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+        }
+        
+        .close-modal:hover {
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+        
+        .btn-primary {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+        
+        .btn-danger {
+            padding: 10px 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        
+        .btn-secondary {
+            padding: 10px 20px;
+            background: #95a5a6;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .term-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 8px;
+        }
+        
+        .term-actions button {
+            padding: 5px 10px;
+            font-size: 12px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+        
+        .term-actions .btn-edit {
+            background: #3498db;
+            color: white;
+        }
+        
+        .term-actions .btn-edit:hover {
+            background: #2980b9;
+        }
+        
+        .term-actions .btn-delete {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .term-actions .btn-delete:hover {
+            background: #c0392b;
+        }
     </style>
 </head>
 <body>
@@ -286,7 +549,6 @@
             <button onclick="switchView('graph')" id="btn-graph" class="view-btn active">📊 Граф</button>
             <button onclick="switchView('list')" id="btn-list" class="view-btn">📋 Список</button>
             <button onclick="loadGraph()" id="btn-refresh" style="display: none;">🔄 Обновить</button>
-            <button onclick="resetView()" id="btn-reset" style="display: none;">🎯 Сбросить вид</button>
             <input type="text" id="searchInput" placeholder="Поиск термина..." onkeyup="searchTerm(event)" style="display: none;">
             <button onclick="clearSearch()" id="btn-clear" style="display: none;">✖️ Очистить</button>
             <button onclick="toggleLegend()" id="btn-legend" style="display: none;">📋 Легенда</button>
@@ -302,6 +564,12 @@
             <div id="graph-view" class="view-container">
                 <div id="graph-container">
                     <div class="loading" id="loading">Загрузка графа...</div>
+                    <!-- Кнопки масштабирования -->
+                    <div class="zoom-controls">
+                        <button onclick="zoomIn()" class="zoom-btn" title="Приблизить">+</button>
+                        <button onclick="zoomOut()" class="zoom-btn" title="Отдалить">−</button>
+                        <button onclick="resetZoom()" class="zoom-btn" title="Сбросить масштаб">⌂</button>
+                    </div>
                 </div>
                 
                 <div class="sidebar">
@@ -309,16 +577,54 @@
                         <h3>📊 Статистика</h3>
                         <p id="statsText">Загрузка...</p>
                     </div>
+                    <div class="management-section">
+                        <h3>⚙️ Управление</h3>
+                        <button onclick="showAddTermModal()" class="manage-btn">➕ Добавить термин</button>
+                    </div>
                     <div id="terms-list"></div>
                 </div>
             </div>
             
             <!-- Вид списка -->
-            <div id="list-view" class="view-container" style="display: none;">
+            <div id="list-view" class="view-container" style="display: none; flex-direction: column;">
+                <div class="list-header">
+                    <h2>Список терминов</h2>
+                    <button onclick="showAddTermModal()" class="manage-btn">➕ Добавить термин</button>
+                </div>
                 <div class="list-container">
                     <div id="terms-cards"></div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для добавления/редактирования термина -->
+    <div id="termModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Добавить термин</h2>
+                <button class="close-modal" onclick="closeTermModal()">&times;</button>
+            </div>
+            <form id="termForm" onsubmit="handleTermSubmit(event)">
+                <input type="hidden" id="termId" value="">
+                <div class="form-group">
+                    <label for="termKeyword">Ключевое слово *</label>
+                    <input type="text" id="termKeyword" required minlength="1" placeholder="Введите ключевое слово">
+                </div>
+                <div class="form-group">
+                    <label for="termDescription">Описание *</label>
+                    <textarea id="termDescription" required minlength="1" placeholder="Введите описание термина"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="termSource">Источник</label>
+                    <input type="text" id="termSource" placeholder="Источник определения (необязательно)">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeTermModal()">Отмена</button>
+                    <button type="submit" class="btn-primary" id="submitBtn">Добавить</button>
+                    <button type="button" class="btn-danger" id="deleteBtn" style="display: none;" onclick="deleteTermFromModal()">Удалить</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -369,7 +675,17 @@
         // Загрузка данных графа
         async function loadGraph() {
             const loadingEl = document.getElementById('loading');
-            loadingEl.style.display = 'block';
+            const container = document.getElementById('graph-container');
+            
+            if (!container) {
+                console.error('Контейнер графа не найден');
+                return;
+            }
+            
+            // Показываем индикатор загрузки, если он существует
+            if (loadingEl) {
+                loadingEl.style.display = 'block';
+            }
             
             try {
                 const response = await fetch(`${API_BASE}/terms/graph/data`);
@@ -380,10 +696,13 @@
                 allEdges = data.edges;
                 
                 // Обновление статистики
-                document.getElementById('statsText').innerHTML = `
-                    <strong>Терминов:</strong> ${allNodes.length}<br>
-                    <strong>Связей:</strong> ${allEdges.length}
-                `;
+                const statsText = document.getElementById('statsText');
+                if (statsText) {
+                    statsText.innerHTML = `
+                        <strong>Терминов:</strong> ${allNodes.length}<br>
+                        <strong>Связей:</strong> ${allEdges.length}
+                    `;
+                }
                 
                 // Создание визуализации
                 createVisualization(allNodes, allEdges);
@@ -396,16 +715,36 @@
                 
             } catch (error) {
                 console.error('Ошибка:', error);
-                document.getElementById('graph-container').innerHTML = 
+                container.innerHTML = 
                     `<div class="error">Ошибка загрузки данных: ${error.message}</div>`;
             } finally {
-                loadingEl.style.display = 'none';
+                // Скрываем индикатор загрузки, если он существует
+                if (loadingEl) {
+                    loadingEl.style.display = 'none';
+                }
             }
         }
         
         // Создание визуализации графа
         function createVisualization(nodesData, edgesData) {
             const container = document.getElementById('graph-container');
+            
+            if (!container) {
+                console.error('Контейнер графа не найден');
+                return;
+            }
+            
+            // Очищаем контейнер перед созданием нового графа
+            if (network) {
+                network.destroy();
+                network = null;
+            }
+            
+            // Удаляем старые элементы, если есть
+            const loadingEl = document.getElementById('loading');
+            if (loadingEl) {
+                loadingEl.style.display = 'none';
+            }
             
             // Подготовка данных для vis-network
             nodes = new vis.DataSet(nodesData.map(node => {
@@ -522,6 +861,20 @@
             
             network = new vis.Network(container, data, options);
             
+            // Убеждаемся, что кнопки масштабирования присутствуют в DOM
+            // vis-network может удалить их при инициализации
+            let zoomControls = container.querySelector('.zoom-controls');
+            if (!zoomControls) {
+                zoomControls = document.createElement('div');
+                zoomControls.className = 'zoom-controls';
+                zoomControls.innerHTML = `
+                    <button onclick="zoomIn()" class="zoom-btn" title="Приблизить">+</button>
+                    <button onclick="zoomOut()" class="zoom-btn" title="Отдалить">−</button>
+                    <button onclick="resetZoom()" class="zoom-btn" title="Сбросить масштаб">⌂</button>
+                `;
+                container.appendChild(zoomControls);
+            }
+            
             // Обработка событий
             network.on('click', function(params) {
                 if (params.nodes.length > 0) {
@@ -622,10 +975,14 @@
                 const listContainer = document.getElementById('terms-list');
                 
                 listContainer.innerHTML = terms.map(term => `
-                    <div class="term-card" data-id="${term.id}" onclick="selectTerm(${term.id})">
-                        <div class="term-keyword">${term.keyword}</div>
-                        <div class="term-description">${term.description.substring(0, 100)}${term.description.length > 100 ? '...' : ''}</div>
-                        ${term.source ? `<div class="term-source">Источник: ${term.source}</div>` : ''}
+                    <div class="term-card" data-id="${term.id}">
+                        <div class="term-keyword" onclick="selectTerm(${term.id})">${term.keyword}</div>
+                        <div class="term-description" onclick="selectTerm(${term.id})">${term.description.substring(0, 100)}${term.description.length > 100 ? '...' : ''}</div>
+                        ${term.source ? `<div class="term-source" onclick="selectTerm(${term.id})">Источник: ${term.source}</div>` : ''}
+                        <div class="term-actions">
+                            <button class="btn-edit" onclick="editTerm(${term.id}, event)">✏️ Редактировать</button>
+                            <button class="btn-delete" onclick="deleteTerm(${term.id}, event)">🗑️ Удалить</button>
+                        </div>
                     </div>
                 `).join('');
                 
@@ -684,13 +1041,44 @@
             }
         }
         
-        // Сбросить вид
-        function resetView() {
-            clearSearch();
+        // Приближение графа
+        function zoomIn() {
+            if (network) {
+                const scale = network.getScale();
+                const position = network.getViewPosition();
+                network.moveTo({
+                    position: position,
+                    scale: Math.min(scale * 1.2, 4.0), // Максимальный масштаб 4x
+                    animation: {
+                        duration: 300,
+                        easingFunction: 'easeInOutQuad'
+                    }
+                });
+            }
+        }
+        
+        // Отдаление графа
+        function zoomOut() {
+            if (network) {
+                const scale = network.getScale();
+                const position = network.getViewPosition();
+                network.moveTo({
+                    position: position,
+                    scale: Math.max(scale * 0.8, 0.1), // Минимальный масштаб 0.1x
+                    animation: {
+                        duration: 300,
+                        easingFunction: 'easeInOutQuad'
+                    }
+                });
+            }
+        }
+        
+        // Сбросить масштаб графа
+        function resetZoom() {
             if (network) {
                 network.fit({
                     animation: {
-                        duration: 1000,
+                        duration: 500,
                         easingFunction: 'easeInOutQuad'
                     }
                 });
@@ -700,9 +1088,34 @@
         // Показать/скрыть легенду
         function toggleLegend() {
             const legend = document.getElementById('legend');
-            legend.style.display = legend.style.display === 'none' ? 'block' : 'none';
+            if (!legend) return;
+            
+            const isVisible = legend.style.display === 'block';
+            legend.style.display = isVisible ? 'none' : 'block';
+            
             if (legend.style.display === 'block') {
                 updateLegend();
+                // Добавляем обработчик клика вне легенды
+                setTimeout(() => {
+                    document.addEventListener('click', handleClickOutsideLegend);
+                }, 10);
+            } else {
+                // Удаляем обработчик при скрытии
+                document.removeEventListener('click', handleClickOutsideLegend);
+            }
+        }
+        
+        // Обработчик клика вне легенды
+        function handleClickOutsideLegend(event) {
+            const legend = document.getElementById('legend');
+            const btnLegend = document.getElementById('btn-legend');
+            
+            if (!legend || !btnLegend) return;
+            
+            // Проверяем, был ли клик вне легенды и кнопки
+            if (!legend.contains(event.target) && !btnLegend.contains(event.target)) {
+                legend.style.display = 'none';
+                document.removeEventListener('click', handleClickOutsideLegend);
             }
         }
         
@@ -735,7 +1148,7 @@
             const listView = document.getElementById('list-view');
             const btnGraph = document.getElementById('btn-graph');
             const btnList = document.getElementById('btn-list');
-            const graphControls = ['btn-refresh', 'btn-reset', 'searchInput', 'btn-clear', 'btn-legend'];
+            const graphControls = ['btn-refresh', 'searchInput', 'btn-clear', 'btn-legend'];
             
             if (!graphView || !listView || !btnGraph || !btnList) {
                 console.error('Не найдены необходимые элементы DOM');
@@ -751,9 +1164,29 @@
                     const el = document.getElementById(id);
                     if (el) el.style.display = 'inline-block';
                 });
-                if (!network) {
-                    loadGraph();
+                
+                // Проверяем, нужно ли перезагружать граф
+                const container = document.getElementById('graph-container');
+                if (!container) {
+                    console.error('Контейнер графа не найден');
+                    return;
                 }
+                
+                // Всегда пересоздаем граф при переключении, чтобы избежать проблем с размерами
+                // Используем задержку, чтобы DOM успел обновиться после изменения display
+                setTimeout(() => {
+                    // Уничтожаем старый граф, если он существует
+                    if (network) {
+                        network.destroy();
+                        network = null;
+                    }
+                    
+                    // Очищаем контейнер
+                    container.innerHTML = '<div class="loading" id="loading">Загрузка графа...</div>';
+                    
+                    // Загружаем граф заново
+                    loadGraph();
+                }, 100);
             } else {
                 graphView.style.display = 'none';
                 listView.style.display = 'block';
@@ -780,9 +1213,14 @@
                 terms.sort((a, b) => a.keyword.localeCompare(b.keyword));
                 
                 container.innerHTML = terms.map(term => `
-                    <div class="term-card-full">
+                    <div class="term-card-full" data-id="${term.id}">
                         <div class="term-keyword">${term.keyword}</div>
                         <div class="term-description">${term.description || 'Описание отсутствует'}</div>
+                        ${term.source ? `<div class="term-source">Источник: ${term.source}</div>` : ''}
+                        <div class="term-actions">
+                            <button class="btn-edit" onclick="editTerm(${term.id}, event)">✏️ Редактировать</button>
+                            <button class="btn-delete" onclick="deleteTerm(${term.id}, event)">🗑️ Удалить</button>
+                        </div>
                     </div>
                 `).join('');
                 
@@ -790,6 +1228,187 @@
                 console.error('Ошибка загрузки списка терминов:', error);
                 document.getElementById('terms-cards').innerHTML = 
                     `<div class="error">Ошибка загрузки данных: ${error.message}</div>`;
+            }
+        }
+        
+        // Показать модальное окно для добавления термина
+        function showAddTermModal() {
+            const modal = document.getElementById('termModal');
+            const form = document.getElementById('termForm');
+            const modalTitle = document.getElementById('modalTitle');
+            const submitBtn = document.getElementById('submitBtn');
+            const deleteBtn = document.getElementById('deleteBtn');
+            
+            modalTitle.textContent = 'Добавить термин';
+            submitBtn.textContent = 'Добавить';
+            deleteBtn.style.display = 'none';
+            document.getElementById('termId').value = '';
+            form.reset();
+            modal.style.display = 'block';
+        }
+        
+        // Показать модальное окно для редактирования термина
+        async function editTerm(termId, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/terms/${termId}`);
+                if (!response.ok) throw new Error('Ошибка загрузки термина');
+                
+                const term = await response.json();
+                const modal = document.getElementById('termModal');
+                const modalTitle = document.getElementById('modalTitle');
+                const submitBtn = document.getElementById('submitBtn');
+                const deleteBtn = document.getElementById('deleteBtn');
+                
+                modalTitle.textContent = 'Редактировать термин';
+                submitBtn.textContent = 'Сохранить';
+                deleteBtn.style.display = 'inline-block';
+                
+                document.getElementById('termId').value = term.id;
+                document.getElementById('termKeyword').value = term.keyword;
+                document.getElementById('termDescription').value = term.description;
+                document.getElementById('termSource').value = term.source || '';
+                
+                modal.style.display = 'block';
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка загрузки термина: ' + error.message);
+            }
+        }
+        
+        // Удалить термин
+        async function deleteTerm(termId, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            
+            if (!confirm('Вы уверены, что хотите удалить этот термин?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/terms/${termId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Ошибка удаления термина');
+                }
+                
+                alert('Термин успешно удален');
+                
+                // Обновляем список терминов
+                if (document.getElementById('graph-view').style.display !== 'none') {
+                    loadTermsListSidebar();
+                    // Перезагружаем граф
+                    if (network) {
+                        network.destroy();
+                        network = null;
+                    }
+                    loadGraph();
+                } else {
+                    loadTermsList();
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка удаления термина: ' + error.message);
+            }
+        }
+        
+        // Удалить термин из модального окна
+        function deleteTermFromModal() {
+            const termId = document.getElementById('termId').value;
+            if (termId) {
+                closeTermModal();
+                deleteTerm(parseInt(termId));
+            }
+        }
+        
+        // Обработка отправки формы
+        async function handleTermSubmit(event) {
+            event.preventDefault();
+            
+            const termId = document.getElementById('termId').value;
+            const keyword = document.getElementById('termKeyword').value.trim();
+            const description = document.getElementById('termDescription').value.trim();
+            const source = document.getElementById('termSource').value.trim();
+            
+            if (!keyword || !description) {
+                alert('Пожалуйста, заполните все обязательные поля');
+                return;
+            }
+            
+            try {
+                const termData = {
+                    keyword: keyword,
+                    description: description,
+                    source: source || null
+                };
+                
+                let response;
+                if (termId) {
+                    // Обновление существующего термина
+                    response = await fetch(`${API_BASE}/terms/${termId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(termData)
+                    });
+                } else {
+                    // Добавление нового термина
+                    response = await fetch(`${API_BASE}/terms`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(termData)
+                    });
+                }
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Ошибка сохранения термина');
+                }
+                
+                const savedTerm = await response.json();
+                alert(termId ? 'Термин успешно обновлен' : 'Термин успешно добавлен');
+                closeTermModal();
+                
+                // Обновляем список терминов
+                if (document.getElementById('graph-view').style.display !== 'none') {
+                    loadTermsListSidebar();
+                    // Перезагружаем граф
+                    if (network) {
+                        network.destroy();
+                        network = null;
+                    }
+                    loadGraph();
+                } else {
+                    loadTermsList();
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка сохранения термина: ' + error.message);
+            }
+        }
+        
+        // Закрыть модальное окно
+        function closeTermModal() {
+            const modal = document.getElementById('termModal');
+            modal.style.display = 'none';
+            document.getElementById('termForm').reset();
+        }
+        
+        // Закрыть модальное окно при клике вне его
+        window.onclick = function(event) {
+            const modal = document.getElementById('termModal');
+            if (event.target === modal) {
+                closeTermModal();
             }
         }
         
