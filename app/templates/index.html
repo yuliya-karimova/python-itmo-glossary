@@ -320,8 +320,7 @@
         let graphData = { nodes: [], edges: [] };
         let svg, simulation, tooltip, g;
         let selectedNode = null;
-        let nodeRadius = 60; // Радиус узла для ограничений границ
-        const maxPanOffset = 400; // Максимальное смещение в пикселях
+        let nodeRadius = 60; // Радиус узла
         
         // Инициализация
         document.addEventListener('DOMContentLoaded', () => {
@@ -377,25 +376,13 @@
             // Группа для трансформаций (pan)
             g = svg.append('g');
             
-            // Настройка pan с ограничением
+            // Настройка pan без ограничений
             const zoom = d3.zoom()
                 .scaleExtent([1, 1]) // Фиксированный масштаб (без масштабирования)
                 .on('zoom', (event) => {
-                    // Ограничиваем перемещение до 200px в каждую сторону
+                    // Убираем ограничения - граф можно перемещать свободно
                     const t = event.transform;
-                    const limitedX = Math.max(-maxPanOffset, Math.min(maxPanOffset, t.x));
-                    const limitedY = Math.max(-maxPanOffset, Math.min(maxPanOffset, t.y));
-                    
-                    // Применяем ограниченную трансформацию
-                    g.attr('transform', `translate(${limitedX},${limitedY})`);
-                    
-                    // Если координаты вышли за пределы, обновляем transform в zoom
-                    if (t.x !== limitedX || t.y !== limitedY) {
-                        // Используем setTimeout для избежания конфликтов во время обработки события
-                        setTimeout(() => {
-                            svg.call(zoom.transform, d3.zoomIdentity.translate(limitedX, limitedY));
-                        }, 0);
-                    }
+                    g.attr('transform', `translate(${t.x},${t.y})`);
                 })
                 .filter((event) => {
                     // Разрешаем только перетаскивание мышью (не колесико мыши)
@@ -730,19 +717,9 @@
         }
         
         function dragged(event, d) {
-            // Получаем размеры SVG
-            const width = parseInt(svg.attr('width'));
-            const height = parseInt(svg.attr('height'));
-            
-            // Ограничиваем позицию узла границами с учетом радиуса
-            const minX = nodeRadius;
-            const maxX = width - nodeRadius;
-            const minY = nodeRadius;
-            const maxY = height - nodeRadius;
-            
-            // Применяем ограничения
-            d.fx = Math.max(minX, Math.min(maxX, event.x));
-            d.fy = Math.max(minY, Math.min(maxY, event.y));
+            // Убираем ограничения - узлы можно перемещать свободно
+            d.fx = event.x;
+            d.fy = event.y;
         }
         
         function dragended(event, d) {

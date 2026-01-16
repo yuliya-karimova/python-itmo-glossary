@@ -34,12 +34,18 @@ def import_terms(csv_path: str, db: Session):
                 db.add(term)
                 print(f"Добавлен термин: {row['term']} (тип: {node_type})")
             else:
-                # Обновляем тип, если его нет или он изменился
+                # Обновляем определение и тип, если они изменились
+                updated = False
+                if existing.definition != row['definition']:
+                    existing.definition = row['definition']
+                    updated = True
+                    print(f"Обновлено определение термина: {row['term']}")
                 if existing.node_type != node_type:
                     existing.node_type = node_type
+                    updated = True
                     print(f"Обновлен тип термина: {row['term']} -> {node_type}")
-                else:
-                    print(f"Термин уже существует: {row['term']}")
+                if not updated:
+                    print(f"Термин уже актуален: {row['term']}")
     db.commit()
 
 
