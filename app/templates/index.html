@@ -20,7 +20,7 @@
         }
         
         .container {
-            max-width: 1400px;
+            max-width: 1800px;
             margin: 0 auto;
             background: white;
             border-radius: 15px;
@@ -28,21 +28,35 @@
             overflow: hidden;
         }
         
+        .main-content {
+            display: flex;
+            gap: 0;
+            background-color: #f8f9fa;
+        }
+        
+        .graph-section {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .terms-list-section {
+            width: 400px;
+            height: 800px;
+            border-left: 1px solid #dee2e6;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+        }
+        
         header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 30px;
+            padding: 15px;
             text-align: center;
         }
         
         header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }
-        
-        header p {
-            font-size: 1.1em;
-            opacity: 0.9;
+            font-size: 1.5em;
         }
         
         .controls {
@@ -84,6 +98,20 @@
             height: 800px;
             position: relative;
             background: #f8f9fa;
+            overflow: hidden;
+            cursor: grab;
+        }
+        
+        #graph-container:active {
+            cursor: grabbing;
+        }
+        
+        svg {
+            cursor: grab;
+        }
+        
+        svg:active {
+            cursor: grabbing;
         }
         
         .node {
@@ -175,27 +203,82 @@
             margin-right: 5px;
             vertical-align: middle;
         }
+        
+        .terms-list-header {
+            padding: 20px;
+            background: #667eea;
+            color: white;
+            font-size: 1.2em;
+            font-weight: 600;
+            border-bottom: 2px solid #5568d3;
+            flex-shrink: 0;
+        }
+        
+        .terms-list {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .term-item {
+            background: white;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .term-item:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+        
+        .term-item.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .term-item-title {
+            font-weight: 600;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .term-item.selected .term-item-title {
+            color: #667eea;
+        }
+        
+        .term-item-definition {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
             <h1>📚 Глоссарий Backend-Driven UI</h1>
-            <p>Семантический граф терминов и их связей</p>
         </header>
         
         <div class="controls">
             <input type="text" id="searchInput" placeholder="Поиск термина...">
             <button onclick="searchTerm()">Поиск</button>
-            <button onclick="resetView()">Сброс</button>
-            <button onclick="centerGraph()">Центрировать</button>
         </div>
         
-        <div id="graph-container">
-            <div class="tooltip" id="tooltip"></div>
-        </div>
-        
-        <div class="legend">
+        <div class="main-content">
+            <div class="graph-section">
+                <div id="graph-container">
+                    <div class="tooltip" id="tooltip"></div>
+                </div>
+                
+                <div class="legend">
             <h3>Легенда</h3>
             <div class="legend-item">
                 <span class="legend-color" style="background: #9c27b0;"></span>
@@ -216,13 +299,29 @@
             <div class="legend-item" style="margin-top: 10px; font-size: 12px; color: #666;">
                 💡 Перетащите узел, чтобы зафиксировать его на новом месте.
             </div>
+            <div class="legend-item" style="margin-top: 5px; font-size: 12px; color: #666;">
+                🖱️ Перетащите фон для перемещения графа (до 200px в каждую сторону).
+            </div>
+                </div>
+            </div>
+            
+            <div class="terms-list-section">
+                <div class="terms-list-header">
+                    📋 Список терминов
+                </div>
+                <div class="terms-list" id="terms-list">
+                    <!-- Список терминов будет добавлен через JavaScript -->
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
         let graphData = { nodes: [], edges: [] };
-        let svg, simulation, tooltip;
+        let svg, simulation, tooltip, g;
         let selectedNode = null;
+        let nodeRadius = 60; // Радиус узла для ограничений границ
+        const maxPanOffset = 400; // Максимальное смещение в пикселях
         
         // Инициализация
         document.addEventListener('DOMContentLoaded', () => {
@@ -255,6 +354,7 @@
                     return;
                 }
                 renderGraph();
+                renderTermsList();
             } catch (error) {
                 console.error('Ошибка загрузки графа:', error);
                 document.getElementById('graph-container').innerHTML = 
@@ -273,6 +373,38 @@
             svg = container.append('svg')
                 .attr('width', width)
                 .attr('height', height);
+            
+            // Группа для трансформаций (pan)
+            g = svg.append('g');
+            
+            // Настройка pan с ограничением
+            const zoom = d3.zoom()
+                .scaleExtent([1, 1]) // Фиксированный масштаб (без масштабирования)
+                .on('zoom', (event) => {
+                    // Ограничиваем перемещение до 200px в каждую сторону
+                    const t = event.transform;
+                    const limitedX = Math.max(-maxPanOffset, Math.min(maxPanOffset, t.x));
+                    const limitedY = Math.max(-maxPanOffset, Math.min(maxPanOffset, t.y));
+                    
+                    // Применяем ограниченную трансформацию
+                    g.attr('transform', `translate(${limitedX},${limitedY})`);
+                    
+                    // Если координаты вышли за пределы, обновляем transform в zoom
+                    if (t.x !== limitedX || t.y !== limitedY) {
+                        // Используем setTimeout для избежания конфликтов во время обработки события
+                        setTimeout(() => {
+                            svg.call(zoom.transform, d3.zoomIdentity.translate(limitedX, limitedY));
+                        }, 0);
+                    }
+                })
+                .filter((event) => {
+                    // Разрешаем только перетаскивание мышью (не колесико мыши)
+                    return event.type === 'mousedown' || 
+                           (event.type === 'mousemove' && event.buttons === 1) || 
+                           event.type === 'mouseup';
+                });
+            
+            svg.call(zoom);
             
             // Преобразуем edges для D3.js (source и target должны быть объектами узлов)
             const nodeMap = new Map(graphData.nodes.map(n => [n.id, n]));
@@ -468,7 +600,7 @@
             // Остальные узлы будут свободно размещаться вокруг фиксированных
             
             // Создание линий
-            const link = svg.append('g')
+            const link = g.append('g')
                 .attr('class', 'links')
                 .selectAll('line')
                 .data(links)
@@ -477,7 +609,7 @@
                 .attr('stroke-width', 2);
             
             // Создание меток связей
-            const linkLabels = svg.append('g')
+            const linkLabels = g.append('g')
                 .attr('class', 'link-labels')
                 .selectAll('text')
                 .data(links)
@@ -491,7 +623,7 @@
                 .style('user-select', 'none');
             
             // Создание узлов
-            const node = svg.append('g')
+            const node = g.append('g')
                 .selectAll('g')
                 .data(graphData.nodes)
                 .enter().append('g')
@@ -502,7 +634,7 @@
                     .on('end', dragended));
             
             node.append('circle')
-                .attr('r', 60)
+                .attr('r', nodeRadius)
                 .attr('fill', d => {
                     // Используем цвет на основе типа узла из базы данных
                     return d.color || '#667eea';
@@ -593,12 +725,24 @@
             // Сохраняем текущую позицию
             d.fx = d.x;
             d.fy = d.y;
+            // Останавливаем распространение события, чтобы не срабатывал zoom
+            event.sourceEvent.stopPropagation();
         }
         
         function dragged(event, d) {
-            // Обновляем позицию при перетаскивании
-            d.fx = event.x;
-            d.fy = event.y;
+            // Получаем размеры SVG
+            const width = parseInt(svg.attr('width'));
+            const height = parseInt(svg.attr('height'));
+            
+            // Ограничиваем позицию узла границами с учетом радиуса
+            const minX = nodeRadius;
+            const maxX = width - nodeRadius;
+            const minY = nodeRadius;
+            const maxY = height - nodeRadius;
+            
+            // Применяем ограничения
+            d.fx = Math.max(minX, Math.min(maxX, event.x));
+            d.fy = Math.max(minY, Math.min(maxY, event.y));
         }
         
         function dragended(event, d) {
@@ -624,6 +768,8 @@
             // Подсветка выбранного узла и связанных
             selectedNode = d;
             highlightNode(d.id);
+            // Выделяем термин в списке
+            highlightTermInList(d.id);
         }
         
         function highlightNode(nodeId) {
@@ -649,7 +795,6 @@
         function searchTerm() {
             const keyword = document.getElementById('searchInput').value.trim();
             if (!keyword) {
-                resetView();
                 return;
             }
             
@@ -660,6 +805,7 @@
             
             if (foundNode) {
                 highlightNode(foundNode.id);
+                highlightTermInList(foundNode.id);
                 // Центрирование на найденном узле
                 simulation.alpha(1).restart();
                 foundNode.fx = svg.attr('width') / 2;
@@ -673,43 +819,55 @@
             }
         }
         
-        function resetView() {
-            document.getElementById('searchInput').value = '';
-            selectedNode = null;
-            svg.selectAll('.node circle')
-                .attr('fill', d => {
-                    // Восстанавливаем оригинальный цвет из базы данных
-                    return d.color || '#667eea';
+        // Рендеринг списка терминов
+        function renderTermsList() {
+            const termsList = document.getElementById('terms-list');
+            termsList.innerHTML = '';
+            
+            // Сортируем термины по алфавиту
+            const sortedNodes = [...graphData.nodes].sort((a, b) => 
+                a.label.localeCompare(b.label, 'ru')
+            );
+            
+            sortedNodes.forEach(node => {
+                const termItem = document.createElement('div');
+                termItem.className = 'term-item';
+                termItem.id = `term-item-${node.id}`;
+                termItem.setAttribute('data-node-id', node.id);
+                
+                termItem.innerHTML = `
+                    <div class="term-item-title">${node.label}</div>
+                    <div class="term-item-definition">${node.definition || 'Описание отсутствует'}</div>
+                `;
+                
+                // При клике на элемент списка выделяем соответствующий узел
+                termItem.addEventListener('click', () => {
+                    const nodeId = termItem.getAttribute('data-node-id');
+                    const node = graphData.nodes.find(n => n.id === nodeId);
+                    if (node) {
+                        highlightNode(nodeId);
+                        highlightTermInList(nodeId);
+                    }
                 });
-            simulation.alpha(1).restart();
+                
+                termsList.appendChild(termItem);
+            });
         }
         
-        function centerGraph() {
-            // Возвращаем ключевые узлы на их позиции
-            const width = parseInt(svg.attr('width'));
-            const height = parseInt(svg.attr('height'));
-            const centerX = width / 2;
-            const centerY = height / 2;
-            const sideOffset = 400;
+        // Выделение термина в списке
+        function highlightTermInList(nodeId) {
+            // Убираем выделение со всех элементов
+            document.querySelectorAll('.term-item').forEach(item => {
+                item.classList.remove('selected');
+            });
             
-            const rootNode = graphData.nodes.find(n => n.label === 'Подход к разработке интерфейса');
-            const classicNode = graphData.nodes.find(n => n.label === 'Классическая разработка UI');
-            const backendNode = graphData.nodes.find(n => n.label === 'Backend-Driven UI');
-            
-            if (rootNode) {
-                rootNode.fx = centerX;
-                rootNode.fy = centerY;
+            // Выделяем нужный элемент
+            const termItem = document.getElementById(`term-item-${nodeId}`);
+            if (termItem) {
+                termItem.classList.add('selected');
+                // Прокручиваем к выделенному элементу
+                termItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
-            if (classicNode) {
-                classicNode.fx = centerX - sideOffset;
-                classicNode.fy = centerY;
-            }
-            if (backendNode) {
-                backendNode.fx = centerX + sideOffset;
-                backendNode.fy = centerY;
-            }
-            
-            simulation.alpha(1).restart();
         }
     </script>
 </body>
