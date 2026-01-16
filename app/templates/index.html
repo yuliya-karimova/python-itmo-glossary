@@ -243,11 +243,18 @@
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
         
+        .term-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
         .term-item-title {
             font-weight: 600;
             font-size: 16px;
             color: #333;
-            margin-bottom: 8px;
+            flex: 1;
         }
         
         .term-item.selected .term-item-title {
@@ -258,6 +265,26 @@
             font-size: 14px;
             color: #666;
             line-height: 1.5;
+        }
+        
+        .delete-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s;
+            margin-left: 10px;
+        }
+        
+        .delete-btn:hover {
+            background: #ee5a5a;
+        }
+        
+        .term-item {
+            position: relative;
         }
     </style>
 </head>
@@ -270,6 +297,7 @@
         <div class="controls">
             <input type="text" id="searchInput" placeholder="Поиск термина...">
             <button onclick="searchTerm()">Поиск</button>
+            <button onclick="restoreFromCSV()" style="background: #28a745; margin-left: 10px;">🔄 Восстановить из CSV</button>
         </div>
         
         <div class="main-content">
@@ -812,10 +840,31 @@
                 termItem.id = `term-item-${node.id}`;
                 termItem.setAttribute('data-node-id', node.id);
                 
-                termItem.innerHTML = `
-                    <div class="term-item-title">${node.label}</div>
-                    <div class="term-item-definition">${node.definition || 'Описание отсутствует'}</div>
-                `;
+                // Создаем структуру элемента
+                const header = document.createElement('div');
+                header.className = 'term-item-header';
+                
+                const title = document.createElement('div');
+                title.className = 'term-item-title';
+                title.textContent = node.label;
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = '✕';
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Предотвращаем всплытие события
+                    deleteTerm(node.id, node.label);
+                });
+                
+                header.appendChild(title);
+                header.appendChild(deleteBtn);
+                
+                const definition = document.createElement('div');
+                definition.className = 'term-item-definition';
+                definition.textContent = node.definition || 'Описание отсутствует';
+                
+                termItem.appendChild(header);
+                termItem.appendChild(definition);
                 
                 // При клике на элемент списка выделяем соответствующий узел
                 termItem.addEventListener('click', () => {
@@ -844,6 +893,66 @@
                 termItem.classList.add('selected');
                 // Прокручиваем к выделенному элементу
                 termItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+        
+        // Удаление термина
+        async function deleteTerm(nodeId, termLabel) {
+            // Подтверждение удаления
+            if (!confirm(`Вы уверены, что хотите удалить термин "${termLabel}"?\n\nЭто действие также удалит все связи с этим термином.\n\n⚠️ Удаление окончательное! Для восстановления используйте кнопку "Восстановить из CSV".`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/terms/${nodeId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('Термин не найден');
+                    }
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.detail || `Ошибка удаления: ${response.status}`);
+                }
+                
+                // Перезагружаем граф после успешного удаления
+                await loadGraph();
+                
+                // Показываем сообщение об успехе
+                alert(`Термин "${termLabel}" успешно удален`);
+            } catch (error) {
+                console.error('Ошибка при удалении термина:', error);
+                alert(`Ошибка при удалении термина: ${error.message}`);
+            }
+        }
+        
+        // Восстановление данных из CSV
+        async function restoreFromCSV() {
+            if (!confirm('Восстановить все термины и связи из CSV файлов?\n\nЭто действие:\n- Добавит отсутствующие термины\n- Обновит существующие термины\n- Добавит отсутствующие связи')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/import', {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.detail || `Ошибка импорта: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                // Перезагружаем граф после успешного импорта
+                await loadGraph();
+                
+                // Показываем сообщение об успехе
+                alert('Данные успешно восстановлены из CSV файлов!');
+            } catch (error) {
+                console.error('Ошибка при восстановлении данных:', error);
+                alert(`Ошибка при восстановлении данных: ${error.message}`);
             }
         }
     </script>
