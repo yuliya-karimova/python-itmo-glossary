@@ -110,6 +110,9 @@ async def update_term(term_id: int, term_data: TermUpdate, db: Session = Depends
     if term_data.definition is not None:
         term.definition = term_data.definition
     
+    if term_data.node_type is not None:
+        term.node_type = term_data.node_type
+    
     db.commit()
     db.refresh(term)
     return term
@@ -236,11 +239,15 @@ async def get_graph(db: Session = Depends(get_db)):
 # ========== Утилиты ==========
 
 @app.post("/api/import", tags=["Утилиты"])
-async def import_data():
-    """Импорт данных из CSV файлов (ручной запуск)"""
+async def import_data(reset: bool = False):
+    """Импорт данных из CSV файлов (ручной запуск)
+    
+    Args:
+        reset: Если True, полностью очищает базу данных перед импортом
+    """
     try:
         from app.import_data import main as import_main
-        import_main()
+        import_main(reset=reset)
         return {"message": "Данные успешно импортированы"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка импорта: {str(e)}")

@@ -85,8 +85,12 @@ def import_links(csv_path: str, db: Session):
     db.commit()
 
 
-def main():
-    """Основная функция импорта"""
+def main(reset: bool = False):
+    """Основная функция импорта
+    
+    Args:
+        reset: Если True, полностью очищает базу данных перед импортом
+    """
     # Инициализация БД
     init_db()
     
@@ -97,6 +101,14 @@ def main():
     
     db = SessionLocal()
     try:
+        # Если reset=True, полностью очищаем базу данных
+        if reset:
+            print("Очистка базы данных...")
+            db.query(Link).delete()
+            db.query(Term).delete()
+            db.commit()
+            print("База данных очищена")
+        
         print("Импорт терминов...")
         if terms_csv.exists():
             import_terms(str(terms_csv), db)
@@ -113,6 +125,7 @@ def main():
     except Exception as e:
         print(f"Ошибка при импорте: {e}")
         db.rollback()
+        raise
     finally:
         db.close()
 
