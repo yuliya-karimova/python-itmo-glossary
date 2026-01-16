@@ -1,19 +1,23 @@
+version: '3.8'
+
 services:
   glossary-api:
     build: .
-    container_name: glossary-backend
+    container_name: python-itmo-glossary
     ports:
       - "8000:8000"
     volumes:
+      # Монтируем директорию с данными для сохранения БД
       - ./data:/app/data
-      - ./static:/app/static
+      # Монтируем CSV файлы для возможности обновления
+      - ./terms.csv:/app/terms.csv
+      - ./links.csv:/app/links.csv
     environment:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/terms')"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
 

@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Глоссарий Backend-Driven UI</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .controls input, .controls button {
+            padding: 10px 15px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .controls input {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .controls button {
+            background: #667eea;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .controls button:hover {
+            background: #5568d3;
+        }
+        
+        #graph-container {
+            width: 100%;
+            height: 800px;
+            position: relative;
+            background: #f8f9fa;
+        }
+        
+        .node {
+            cursor: pointer;
+        }
+        
+        .node circle {
+            /* Цвет задается через атрибут fill в JavaScript */
+            stroke: white;
+            stroke-width: 3px;
+        }
+        
+        .node text {
+            font-size: 11px;
+            fill: white;
+            font-weight: 500;
+            pointer-events: none;
+            text-anchor: middle;
+        }
+        
+        .link {
+            fill: none;
+            stroke: #999;
+            stroke-opacity: 0.6;
+            stroke-width: 2px;
+        }
+        
+        .link-label {
+            font-size: 10px;
+            fill: #666;
+            text-anchor: middle;
+            background-color: rgba(255, 255, 255, 0.8);
+            paint-order: stroke;
+            stroke: white;
+            stroke-width: 3px;
+            stroke-linejoin: round;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            max-width: 300px;
+            z-index: 1000;
+        }
+        
+        .tooltip.visible {
+            opacity: 1;
+        }
+        
+        .tooltip h3 {
+            margin-bottom: 5px;
+            color: #667eea;
+        }
+        
+        .tooltip p {
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .legend {
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .legend h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .legend-item {
+            display: inline-block;
+            margin-right: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .legend-color {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background: #667eea;
+            border-radius: 50%;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 Глоссарий Backend-Driven UI</h1>
+            <p>Семантический граф терминов и их связей</p>
+        </header>
+        
+        <div class="controls">
+            <input type="text" id="searchInput" placeholder="Поиск термина...">
+            <button onclick="searchTerm()">Поиск</button>
+            <button onclick="resetView()">Сброс</button>
+            <button onclick="centerGraph()">Центрировать</button>
+        </div>
+        
+        <div id="graph-container">
+            <div class="tooltip" id="tooltip"></div>
+        </div>
+        
+        <div class="legend">
+            <h3>Легенда</h3>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #9c27b0;"></span>
+                <span>Корневой термин</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #2196f3;"></span>
+                <span>Основные подходы</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #667eea;"></span>
+                <span>Термин</span>
+            </div>
+            <div class="legend-item">
+                <span style="display: inline-block; width: 30px; height: 2px; background: #999; margin-right: 5px; vertical-align: middle;"></span>
+                <span>Связь между терминами</span>
+            </div>
+            <div class="legend-item" style="margin-top: 10px; font-size: 12px; color: #666;">
+                💡 Перетащите узел, чтобы зафиксировать его на новом месте.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let graphData = { nodes: [], edges: [] };
+        let svg, simulation, tooltip;
+        let selectedNode = null;
+        
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            tooltip = d3.select('#tooltip');
+            loadGraph();
+            
+            // Поиск по Enter
+            document.getElementById('searchInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    searchTerm();
+                }
+            });
+        });
+        
+        // Загрузка графа
+        async function loadGraph() {
+            try {
+                console.log('Загрузка графа...');
+                const response = await fetch('/api/graph');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                graphData = await response.json();
+                console.log('Данные получены:', graphData);
+                console.log(`Узлов: ${graphData.nodes.length}, Связей: ${graphData.edges.length}`);
+                if (graphData.nodes.length === 0) {
+                    console.warn('Граф пуст!');
+                    document.getElementById('graph-container').innerHTML = 
+                        '<div style="text-align: center; padding: 50px; color: #666;">Граф пуст. Данные не загружены.</div>';
+                    return;
+                }
+                renderGraph();
+            } catch (error) {
+                console.error('Ошибка загрузки графа:', error);
+                document.getElementById('graph-container').innerHTML = 
+                    '<div style="text-align: center; padding: 50px; color: #d32f2f;">Ошибка загрузки данных: ' + error.message + '</div>';
+            }
+        }
+        
+        // Рендеринг графа
+        function renderGraph() {
+            const container = d3.select('#graph-container');
+            container.selectAll('*').remove();
+            
+            const width = container.node().offsetWidth;
+            const height = container.node().offsetHeight;
+            
+            svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            // Преобразуем edges для D3.js (source и target должны быть объектами узлов)
+            const nodeMap = new Map(graphData.nodes.map(n => [n.id, n]));
+            
+            // Добавляем цвет к каждому узлу на основе типа из базы данных
+            const colorMap = {
+                'root': '#9c27b0',      // Фиолетовый для корневого узла
+                'approach': '#2196f3',  // Синий для основных подходов
+                'term': '#667eea'       // Голубой для остальных терминов
+            };
+            
+            graphData.nodes.forEach(node => {
+                const nodeType = node.node_type || 'term';
+                node.color = colorMap[nodeType] || colorMap['term'];
+            });
+            
+            const links = graphData.edges.map(e => ({
+                source: nodeMap.get(e.source),
+                target: nodeMap.get(e.target),
+                relation: e.relation
+            })).filter(l => l.source && l.target);
+            
+            console.log('Обработанные связи:', links.length);
+            
+            // Настройка начальных позиций для структурированного дерева
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const sideOffset = 400; // Расстояние от центра до боковых узлов
+            
+            // Находим ключевые узлы
+            const rootNode = graphData.nodes.find(n => n.label === 'Подход к разработке интерфейса');
+            const classicNode = graphData.nodes.find(n => n.label === 'Классическая разработка UI');
+            const backendNode = graphData.nodes.find(n => n.label === 'Backend-Driven UI');
+            
+            // Устанавливаем начальные позиции и фиксируем их
+            if (rootNode) {
+                rootNode.x = centerX;
+                rootNode.y = centerY;
+                rootNode.fx = centerX;  // Фиксируем в центре
+                rootNode.fy = centerY;
+            }
+            
+            if (classicNode) {
+                classicNode.x = centerX - sideOffset;
+                classicNode.y = centerY;
+                classicNode.fx = centerX - sideOffset;  // Фиксируем слева
+                classicNode.fy = centerY;
+            }
+            
+            if (backendNode) {
+                backendNode.x = centerX + sideOffset;
+                backendNode.y = centerY;
+                backendNode.fx = centerX + sideOffset;  // Фиксируем справа
+                backendNode.fy = centerY;
+            }
+            
+            // Кастомная сила для отталкивания узлов от линий между корневым и дочерними узлами
+            // Применяется только когда alpha достаточно мал, чтобы избежать дергания в начале
+            function avoidLines(alpha) {
+                if (!rootNode || !classicNode || !backendNode) return;
+                
+                // Применяем отталкивание только после начальной стабилизации
+                if (alpha > 0.3) return;
+                
+                const rootX = rootNode.fx !== null ? rootNode.fx : rootNode.x;
+                const rootY = rootNode.fy !== null ? rootNode.fy : rootNode.y;
+                const classicX = classicNode.fx !== null ? classicNode.fx : classicNode.x;
+                const classicY = classicNode.fy !== null ? classicNode.fy : classicNode.y;
+                const backendX = backendNode.fx !== null ? backendNode.fx : backendNode.x;
+                const backendY = backendNode.fy !== null ? backendNode.fy : backendNode.y;
+                
+                const minDistance = 180; // Минимальное расстояние от линии
+                const strength = 1.5; // Умеренная сила отталкивания
+                
+                for (let i = 0; i < graphData.nodes.length; i++) {
+                    const node = graphData.nodes[i];
+                    // Пропускаем фиксированные узлы
+                    if (node === rootNode || node === classicNode || node === backendNode) continue;
+                    
+                    const x = node.x;
+                    const y = node.y;
+                    
+                    // Проверяем линию 1: от корня к классическому подходу
+                    const result1 = checkAndPushFromLine(x, y, rootX, rootY, classicX, classicY, minDistance, strength, alpha);
+                    if (result1) {
+                        node.vx += result1.vx;
+                        node.vy += result1.vy;
+                    }
+                    
+                    // Проверяем линию 2: от корня к backend-driven UI
+                    const result2 = checkAndPushFromLine(x, y, rootX, rootY, backendX, backendY, minDistance, strength, alpha);
+                    if (result2) {
+                        node.vx += result2.vx;
+                        node.vy += result2.vy;
+                    }
+                }
+            }
+            
+            // Вспомогательная функция для проверки и отталкивания от линии
+            function checkAndPushFromLine(px, py, x1, y1, x2, y2, minDist, strength, alpha) {
+                const dx = x2 - x1;
+                const dy = y2 - y1;
+                const lenSq = dx * dx + dy * dy;
+                
+                if (lenSq === 0) return null;
+                
+                // Параметр t показывает, где находится проекция на отрезке (0-1)
+                const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / lenSq));
+                
+                // Координаты проекции точки на линию
+                const projX = x1 + t * dx;
+                const projY = y1 + t * dy;
+                
+                // Расстояние от точки до линии
+                const dist = Math.sqrt((px - projX) * (px - projX) + (py - projY) * (py - projY));
+                
+                // Если узел слишком близко к линии
+                if (dist < minDist) {
+                    // Вектор от проекции к узлу (перпендикулярно линии)
+                    let pushDx = px - projX;
+                    let pushDy = py - projY;
+                    const pushDist = Math.sqrt(pushDx * pushDx + pushDy * pushDy);
+                    
+                    // Если узел точно на линии, выбираем направление перпендикулярно
+                    if (pushDist < 1) {
+                        // Перпендикулярный вектор к линии
+                        pushDx = -dy;
+                        pushDy = dx;
+                        const perpLen = Math.sqrt(pushDx * pushDx + pushDy * pushDy);
+                        if (perpLen > 0) {
+                            pushDx /= perpLen;
+                            pushDy /= perpLen;
+                        }
+                    } else {
+                        pushDx /= pushDist;
+                        pushDy /= pushDist;
+                    }
+                    
+                    // Плавная сила отталкивания (квадратичная зависимость для более плавного эффекта)
+                    const normalizedDist = dist / minDist;
+                    const force = (1 - normalizedDist) * (1 - normalizedDist) * strength * alpha;
+                    
+                    return {
+                        vx: pushDx * force,
+                        vy: pushDy * force
+                    };
+                }
+                
+                return null;
+            }
+            
+            // Функция для вычисления расстояния от точки до отрезка
+            function distanceToLineSegment(px, py, x1, y1, x2, y2) {
+                const A = px - x1;
+                const B = py - y1;
+                const C = x2 - x1;
+                const D = y2 - y1;
+                
+                const dot = A * C + B * D;
+                const lenSq = C * C + D * D;
+                let param = -1;
+                if (lenSq !== 0) param = dot / lenSq;
+                
+                let xx, yy;
+                
+                if (param < 0) {
+                    xx = x1;
+                    yy = y1;
+                } else if (param > 1) {
+                    xx = x2;
+                    yy = y2;
+                } else {
+                    xx = x1 + param * C;
+                    yy = y1 + param * D;
+                }
+                
+                const dx = px - xx;
+                const dy = py - yy;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+            
+            // Создание симуляции
+            simulation = d3.forceSimulation(graphData.nodes)
+                .force('link', d3.forceLink(links).id(d => d.id).distance(250))
+                .force('charge', d3.forceManyBody().strength(-600))
+                .force('collision', d3.forceCollide().radius(90))
+                .force('avoidLines', avoidLines)
+                .alphaDecay(0.02) // Нормальное затухание
+                .alpha(1) // Начинаем с полной силы
+                .velocityDecay(0.6); // Нормальное замедление скорости
+            
+            // Не используем force('center'), чтобы фиксированные узлы оставались на своих местах
+            // Остальные узлы будут свободно размещаться вокруг фиксированных
+            
+            // Создание линий
+            const link = svg.append('g')
+                .attr('class', 'links')
+                .selectAll('line')
+                .data(links)
+                .enter().append('line')
+                .attr('class', 'link')
+                .attr('stroke-width', 2);
+            
+            // Создание меток связей
+            const linkLabels = svg.append('g')
+                .attr('class', 'link-labels')
+                .selectAll('text')
+                .data(links)
+                .enter().append('text')
+                .attr('class', 'link-label')
+                .text(d => d.relation)
+                .attr('font-size', '10px')
+                .attr('fill', '#666')
+                .attr('text-anchor', 'middle')
+                .attr('pointer-events', 'none')
+                .style('user-select', 'none');
+            
+            // Создание узлов
+            const node = svg.append('g')
+                .selectAll('g')
+                .data(graphData.nodes)
+                .enter().append('g')
+                .attr('class', 'node')
+                .call(d3.drag()
+                    .on('start', dragstarted)
+                    .on('drag', dragged)
+                    .on('end', dragended));
+            
+            node.append('circle')
+                .attr('r', 60)
+                .attr('fill', d => {
+                    // Используем цвет на основе типа узла из базы данных
+                    return d.color || '#667eea';
+                })
+                .on('mouseover', showTooltip)
+                .on('mouseout', hideTooltip)
+                .on('click', selectNode);
+            
+            // Текст внутри узла с переносом строк
+            node.each(function(d) {
+                const nodeElement = d3.select(this);
+                const words = d.label.split(' ');
+                const maxWordsPerLine = 3;
+                const maxCharsPerLine = 20;
+                
+                let lines = [];
+                let currentLine = '';
+                
+                words.forEach(word => {
+                    const testLine = currentLine ? currentLine + ' ' + word : word;
+                    if (testLine.length > maxCharsPerLine && currentLine) {
+                        lines.push(currentLine);
+                        currentLine = word;
+                    } else {
+                        currentLine = testLine;
+                    }
+                });
+                if (currentLine) lines.push(currentLine);
+                
+                // Ограничиваем количество строк
+                if (lines.length > maxWordsPerLine) {
+                    lines = lines.slice(0, maxWordsPerLine);
+                    lines[maxWordsPerLine - 1] = lines[maxWordsPerLine - 1].substring(0, 17) + '...';
+                }
+                
+                const textElement = nodeElement.append('text')
+                    .attr('text-anchor', 'middle')
+                    .attr('dy', lines.length > 1 ? `${-(lines.length - 1) * 6}px` : '0.35em')
+                    .attr('font-size', lines.length > 1 ? '10px' : '11px')
+                    .attr('fill', 'white')
+                    .attr('font-weight', '500')
+                    .attr('pointer-events', 'none')
+                    .style('user-select', 'none');
+                
+                lines.forEach((line, i) => {
+                    textElement.append('tspan')
+                        .text(line)
+                        .attr('x', 0)
+                        .attr('dy', i === 0 ? '0.35em' : '1.2em');
+                });
+            });
+            
+            // Обновление позиций
+            simulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+                
+                // Обновление позиций меток связей (на середине линии)
+                linkLabels
+                    .attr('x', d => (d.source.x + d.target.x) / 2)
+                    .attr('y', d => (d.source.y + d.target.y) / 2)
+                    .attr('dx', d => {
+                        // Смещение для лучшей читаемости (перпендикулярно линии)
+                        const dx = d.target.x - d.source.x;
+                        const dy = d.target.y - d.source.y;
+                        const len = Math.sqrt(dx * dx + dy * dy);
+                        if (len === 0) return 0;
+                        return (-dy / len) * 12; // Смещение на 12px перпендикулярно
+                    })
+                    .attr('dy', d => {
+                        const dx = d.target.x - d.source.x;
+                        const dy = d.target.y - d.source.y;
+                        const len = Math.sqrt(dx * dx + dy * dy);
+                        if (len === 0) return 0;
+                        return (dx / len) * 12; // Смещение на 12px перпендикулярно
+                    });
+                
+                node.attr('transform', d => `translate(${d.x},${d.y})`);
+            });
+        }
+        
+        // Обработчики событий
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            // Сохраняем текущую позицию
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+        
+        function dragged(event, d) {
+            // Обновляем позицию при перетаскивании
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+        
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            // Фиксируем узел на месте, где его отпустили
+            // НЕ сбрасываем fx и fy, чтобы узел остался на месте
+            // Если нужно разблокировать, можно добавить двойной клик
+        }
+        
+        function showTooltip(event, d) {
+            tooltip
+                .html(`<h3>${d.label}</h3><p>${d.definition}</p>`)
+                .style('left', (event.pageX + 10) + 'px')
+                .style('top', (event.pageY - 10) + 'px')
+                .classed('visible', true);
+        }
+        
+        function hideTooltip() {
+            tooltip.classed('visible', false);
+        }
+        
+        function selectNode(event, d) {
+            // Подсветка выбранного узла и связанных
+            selectedNode = d;
+            highlightNode(d.id);
+        }
+        
+        function highlightNode(nodeId) {
+            const nodeMap = new Map(graphData.nodes.map(n => [n.id, n]));
+            const links = graphData.edges.map(e => ({
+                source: nodeMap.get(e.source),
+                target: nodeMap.get(e.target)
+            })).filter(l => l.source && l.target);
+            
+            svg.selectAll('.node circle')
+                .attr('fill', d => {
+                    if (d.id === nodeId) return '#ff6b6b';
+                    const connected = links.some(l => 
+                        (l.source.id === nodeId && l.target.id === d.id) ||
+                        (l.target.id === nodeId && l.source.id === d.id)
+                    );
+                    if (connected) return '#4ecdc4';
+                    // Восстанавливаем оригинальный цвет из базы данных
+                    return d.color || '#667eea';
+                });
+        }
+        
+        function searchTerm() {
+            const keyword = document.getElementById('searchInput').value.trim();
+            if (!keyword) {
+                resetView();
+                return;
+            }
+            
+            // Поиск узла
+            const foundNode = graphData.nodes.find(n => 
+                n.label.toLowerCase().includes(keyword.toLowerCase())
+            );
+            
+            if (foundNode) {
+                highlightNode(foundNode.id);
+                // Центрирование на найденном узле
+                simulation.alpha(1).restart();
+                foundNode.fx = svg.attr('width') / 2;
+                foundNode.fy = svg.attr('height') / 2;
+                setTimeout(() => {
+                    foundNode.fx = null;
+                    foundNode.fy = null;
+                }, 1000);
+            } else {
+                alert('Термин не найден');
+            }
+        }
+        
+        function resetView() {
+            document.getElementById('searchInput').value = '';
+            selectedNode = null;
+            svg.selectAll('.node circle')
+                .attr('fill', d => {
+                    // Восстанавливаем оригинальный цвет из базы данных
+                    return d.color || '#667eea';
+                });
+            simulation.alpha(1).restart();
+        }
+        
+        function centerGraph() {
+            // Возвращаем ключевые узлы на их позиции
+            const width = parseInt(svg.attr('width'));
+            const height = parseInt(svg.attr('height'));
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const sideOffset = 400;
+            
+            const rootNode = graphData.nodes.find(n => n.label === 'Подход к разработке интерфейса');
+            const classicNode = graphData.nodes.find(n => n.label === 'Классическая разработка UI');
+            const backendNode = graphData.nodes.find(n => n.label === 'Backend-Driven UI');
+            
+            if (rootNode) {
+                rootNode.fx = centerX;
+                rootNode.fy = centerY;
+            }
+            if (classicNode) {
+                classicNode.fx = centerX - sideOffset;
+                classicNode.fy = centerY;
+            }
+            if (backendNode) {
+                backendNode.fx = centerX + sideOffset;
+                backendNode.fy = centerY;
+            }
+            
+            simulation.alpha(1).restart();
+        }
+    </script>
+</body>
+</html>
+

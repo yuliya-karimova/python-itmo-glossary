@@ -1,0 +1,2 @@
+# Python ITMO Glossary Application
+
