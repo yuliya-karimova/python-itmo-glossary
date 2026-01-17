@@ -942,40 +942,41 @@
                 // Вычисляем правильное вертикальное смещение для центрирования многострочного текста
                 const fontSize = lines.length > 1 ? 10 : 11;
                 const lineHeightEm = 1.2; // Межстрочный интервал в em
-                const firstLineOffsetEm = 0.35; // Смещение первой строки для центрирования в em
-                
-                let verticalOffset;
-                if (lines.length === 1) {
-                    // Для одной строки используем стандартное центрирование
-                    verticalOffset = '0.35em';
-                } else {
-                    // Для нескольких строк вычисляем смещение для центрирования
-                    // После применения dy для первого tspan (0.35em), позиция первой строки будет: 0.35em
-                    // Позиция последней строки будет: 0.35em + (lines.length - 1) * 1.2em
-                    // Центр блока текста: (первая + последняя) / 2
-                    const lastLinePosition = firstLineOffsetEm + (lines.length - 1) * lineHeightEm;
-                    const centerPosition = (firstLineOffsetEm + lastLinePosition) / 2;
-                    // Смещаем весь текст вверх так, чтобы центр блока был в нуле (центре круга)
-                    // Учитываем, что первый tspan уже добавит 0.35em, поэтому вычитаем его
-                    const textOffset = -centerPosition;
-                    verticalOffset = `${textOffset}em`;
-                }
                 
                 const textElement = nodeElement.append('text')
                     .attr('text-anchor', 'middle')
-                    .attr('dy', verticalOffset)
+                    .attr('dominant-baseline', 'middle') // Центрирование по вертикали
                     .attr('font-size', `${fontSize}px`)
                     .attr('fill', 'white')
                     .attr('font-weight', '500')
                     .attr('pointer-events', 'none')
                     .style('user-select', 'none');
                 
-                lines.forEach((line, i) => {
-                    textElement.append('tspan')
-                        .text(line)
-                        .attr('x', 0)
-                        .attr('dy', i === 0 ? '0.35em' : '1.2em');
-                });
+                // Для многострочного текста нужно правильно распределить строки
+                if (lines.length === 1) {
+                    // Для одной строки просто добавляем текст
+                    textElement.text(lines[0]);
+                } else {
+                    // Для нескольких строк вычисляем смещение для первой строки
+                    // Общая высота блока = (lines.length - 1) * lineHeightEm
+                    // Центр блока должен быть на 0 (благодаря dominant-baseline="middle")
+                    // Первая строка должна быть выше центра на половину высоты блока
+                    const totalHeight = (lines.length - 1) * lineHeightEm;
+                    const firstLineOffset = -totalHeight / 2;
+                    
+                    lines.forEach((line, i) => {
+                        const tspan = textElement.append('tspan')
+                            .text(line)
+                            .attr('x', 0);
+                        if (i === 0) {
+                            // Первая строка смещается на половину высоты блока вверх
+                            tspan.attr('dy', `${firstLineOffset}em`);
+                        } else {
+                            // Остальные строки смещаются на межстрочный интервал
+                            tspan.attr('dy', `${lineHeightEm}em`);
+                        }
+                    });
+                }
             });
             
             // Обновление позиций
