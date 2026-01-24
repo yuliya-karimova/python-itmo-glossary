@@ -1,7 +1,7 @@
 # Глоссарий Backend-Driven UI
 
 Веб сервис развернут здесь - https://python-itmo-glossary.onrender.com/  
-Отчет - [REPORT.MD](REPORT.MD)
+Отчет - [REPORT.md](REPORT.md)
 
 Веб-приложение для управления глоссарием терминов по теме "Исследование Backend-Driven UI для быстрой доставки изменений интерфейса конечному пользователю".
 
