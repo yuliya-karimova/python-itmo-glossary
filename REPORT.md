@@ -233,7 +233,7 @@ curl http://localhost:8000/api/graph
 - ReDoc: http://localhost:8000/redoc
 
 **Публичное развертывание:**
-> *Укажите здесь адрес вашего развернутого приложения, если оно размещено на публичном сервере*
+https://python-itmo-glossary.onrender.com/
 
 ### Скриншоты интерфейса
 
